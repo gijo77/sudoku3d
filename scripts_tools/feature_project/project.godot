@@ -1,0 +1,14 @@
+; Tiny separate Godot project used only to render the 1024x500 Play Store feature graphic
+; (run by scripts_tools/make_store_assets.sh). Not part of the game.
+config_version=5
+
+[application]
+
+config/name="Feature Graphic"
+run/main_scene="res://feature.tscn"
+
+[display]
+
+window/size/viewport_width=1024
+window/size/viewport_height=500
+window/stretch/mode="canvas_items"

@@ -13,3 +13,4 @@ build/
 *.jks
 keystore.properties
 .env
+android/.build_version
