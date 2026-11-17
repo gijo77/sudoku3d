@@ -7,12 +7,12 @@ signal cell_tapped(idx: int)
 const Board := preload("res://scripts/board3d/board_view_3d.gd")
 const Orbit := preload("res://scripts/board3d/orbit_camera.gd")
 
-const BG_COLOR := Color(0.94, 0.95, 0.98)
 
 var board
 var rig
 
 func _ready() -> void:
+	var BG_COLOR: Color = ThemeManager.palette["bg"]
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = BG_COLOR

@@ -4,8 +4,18 @@ config_version=5
 [application]
 
 config/name="Sudoku 3D"
-run/main_scene="res://scenes/game_3d.tscn"
+run/main_scene="res://scenes/splash.tscn"
+config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Mobile")
+
+[autoload]
+
+Settings="*res://autoload/settings.gd"
+Stats="*res://autoload/stats.gd"
+SaveGame="*res://autoload/save_game.gd"
+AdsHook="*res://autoload/ads_hook.gd"
+ThemeManager="*res://autoload/theme_manager.gd"
+Nav="*res://autoload/nav.gd"
 
 [display]
 

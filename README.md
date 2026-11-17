@@ -7,7 +7,8 @@ Package: `com.aitechplay.sudoku3d`. No internet permission, ads, analytics or ac
 - [x] Milestone 1: logic and tests
 - [x] Milestone 2: 2D playable prototype
 - [x] Milestone 3: 3D board, orbit camera, animations
-- [ ] 4: UI/menus, 5: polish/audio/themes, 6: Android release
+- [x] Milestone 4: menus, daily puzzle, stats, settings, autosave/resume, pause/win/lose, safe area, back button
+- [ ] 5:, polish/audio/themes, 6: Android release
 
 ## Run the tests
 Requires Godot 4.7+ (installed at `~/Applications/Godot.app`, or set `GODOT=/path/to/godot`).
@@ -34,3 +35,10 @@ Desktop shortcuts: 1-9 enter a digit, Backspace erase, arrows move, N notes, Z u
 Drag = rotate slightly, pinch (or mouse wheel / trackpad pinch) = zoom, double tap = reset view, tap = select a cell
 (ray/plane picking). Screenshot helper: `godot --path . --write-movie out.png -- --demo` (add `--win` for the celebration).
 3D code lives in `scripts/board3d/`.
+
+## App flow (M4)
+Splash -> Main menu (Continue / New Game / Daily Puzzle / Statistics / Settings) -> Difficulty -> Game
+(pause, win, lose overlays). Autoload singletons live in `autoload/` (Settings, Stats, SaveGame, Nav, ThemeManager,
+AdsHook - the AdMob hook is a disabled no-op). The game autosaves after every move and when the app loses focus;
+Android back button / Esc pauses in-game and goes back in menus. Data is stored in Godot's `user://` folder
+(settings.cfg, stats.json, savegame.json).
