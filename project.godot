@@ -1,0 +1,19 @@
+; Engine configuration file. Edited by Godot, comments are not preserved there.
+config_version=5
+
+[application]
+
+config/name="Sudoku 3D"
+config/features=PackedStringArray("4.7", "Mobile")
+
+[display]
+
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="mobile"

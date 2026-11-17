@@ -1,0 +1,15 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg.local
+# Android build output and template
+android/build/
+*.apk
+*.aab
+*.idsig
+build/
+# SECRETS - never commit
+*.keystore
+*.jks
+keystore.properties
+.env
