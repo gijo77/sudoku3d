@@ -8,7 +8,7 @@ Package: `com.aitechplay.sudoku3d`. No internet permission, ads, analytics or ac
 - [x] Milestone 2: 2D playable prototype
 - [x] Milestone 3: 3D board, orbit camera, animations
 - [x] Milestone 4: menus, daily puzzle, stats, settings, autosave/resume, pause/win/lose, safe area, back button
-- [ ] 5: polish, audio, themes, Cube Sudoku
+- [x] Milestone 5: audio, themes, quality setting, 3D Cube Sudoku (4x4x4)
 - [ ] 6: Android export and release
 
 ## Run the tests
@@ -43,3 +43,13 @@ Splash -> Main menu (Continue / New Game / Daily Puzzle / Statistics / Settings)
 AdsHook - the AdMob hook is a disabled no-op). The game autosaves after every move and when the app loses focus;
 Android back button / Esc pauses in-game and goes back in menus. Data is stored in Godot's `user://` folder
 (settings.cfg, stats.json, savegame.json).
+
+## Audio, themes, Cube Sudoku (M5)
+- Audio is generated, original and CC0: `python3 scripts_tools/generate_audio.py` rewrites `assets/audio/`.
+  `autoload/audio.gd` plays SFX (pooled) and the music loop, honouring the Sound / Music settings.
+- Themes (Light, Dark, Ocean, Forest, Sunset) are palettes in `autoload/theme_manager.gd` and colour the UI and the 3D tiles.
+- Settings -> "High quality graphics" toggles shadows and anti-aliasing for slower phones.
+- Bonus mode **Cube Sudoku**: a 4x4x4 cube, digits 1-4. Each of the 4 layers is a 4x4 Sudoku (rows, columns, 2x2 boxes)
+  and every vertical pillar contains 1-4 once. Logic: `scripts/logic/cube_sudoku.gd`; view: `scripts/board3d/cube_board_view.gd`.
+  `GameModel` is shared by both modes through a small "rules" adapter. Drag to rotate (lower the camera to see the layers).
+- Screenshot helpers (dev only): `-- --demo`, `--cube`, `--dark`, `--win`, `--top` after `--write-movie`.

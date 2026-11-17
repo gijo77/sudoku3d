@@ -19,6 +19,8 @@ func _ready() -> void:
 	_row(grid, "All", s.played(), s.win_rate(), -1.0)
 	for d in Generator.NAMES:
 		_row(grid, Generator.NAMES[d], s.played(d), s.win_rate(d), s.best_time(d))
+	var cube: Dictionary = s.summary([10, 11, 12, 13])
+	_row(grid, "Cube", cube["played"], float(cube["won"]) / cube["played"] if cube["played"] > 0 else 0.0, cube["best"])
 	for c in grid.get_children():
 		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_child(UI.label("Daily streak: %d day(s)   |   Dailies done: %d" % [s.daily_streak(UI.today_key()), s.daily.size()], 38, HORIZONTAL_ALIGNMENT_CENTER))

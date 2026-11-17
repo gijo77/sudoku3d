@@ -84,3 +84,14 @@ func test_save_game_rejects_bad_data() -> void:
 	f.close()
 	assert_eq(SaveData.load_game(SAVE_PATH).size(), 0, "garbage rejected")
 	SaveData.clear(SAVE_PATH)
+
+func test_summary_over_keys() -> void:
+	var s = StatsData.new()
+	s.record(10, true, 90.0)
+	s.record(11, false, 20.0)
+	s.record(12, true, 60.0)
+	var r: Dictionary = s.summary([10, 11, 12, 13])
+	assert_eq(r["played"], 3, "played")
+	assert_eq(r["won"], 2, "won")
+	assert_eq(r["best"], 60.0, "best across keys")
+	assert_eq(s.summary([13])["best"], -1.0, "none")

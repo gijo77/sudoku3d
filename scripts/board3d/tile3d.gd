@@ -19,11 +19,10 @@ var _value := -1
 var _kind := -1
 var _notes := -1
 
-func setup(cell: int, assets) -> void:
+func setup(cell: int, assets, pos: Vector3) -> void:
 	idx = cell
 	_assets = assets
-	var c := Layout.cell_center(cell)
-	_base = Vector3(c.x, 0, c.y)
+	_base = pos
 	position = _base
 	_box = MeshInstance3D.new()
 	_box.mesh = assets.tile_mesh

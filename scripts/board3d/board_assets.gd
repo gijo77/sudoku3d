@@ -20,17 +20,18 @@ func _init() -> void:
 	for d in range(1, 10):
 		digit_meshes.append(_text_mesh(str(d), 120, 0.0065, DIGIT_DEPTH))
 		note_meshes.append(_text_mesh(str(d), 120, 0.0032, 0.02))
+	var pal: Dictionary = ThemeManager.palette
 	tile_mats = [
-		_mat(Color(0.93, 0.93, 0.96), 0.55),
-		_mat(Color(0.80, 0.87, 0.98), 0.55),
-		_mat(Color(0.62, 0.78, 0.97), 0.55),
-		_mat(Color(0.45, 0.66, 0.95), 0.45),
+		_mat(pal["tile"], 0.55),
+		_mat(pal["peer"], 0.55),
+		_mat(pal["same"], 0.55),
+		_mat(pal["sel"], 0.45),
 	]
 	text_mats = [
-		_mat(Color(0.10, 0.12, 0.18), 0.4),
-		_mat(Color(0.12, 0.38, 0.85), 0.4),
-		_mat(Color(0.88, 0.15, 0.15), 0.4),
-		_mat(Color(0.40, 0.44, 0.52), 0.6),
+		_mat(pal["given"], 0.4),
+		_mat(pal["player"], 0.4),
+		_mat(pal["wrong"], 0.4),
+		_mat(pal["note"], 0.6),
 	]
 
 func _text_mesh(text: String, font_size: int, pixel_size: float, depth: float) -> TextMesh:

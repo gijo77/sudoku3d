@@ -40,6 +40,20 @@ func win_rate(difficulty: int = -1) -> float:
 func best_time(difficulty: int) -> float:
 	return float(_entry(difficulty)["best"])
 
+## Combined played / won / best time over several difficulty keys (e.g. [10, 11, 12, 13] = Cube).
+func summary(keys: Array) -> Dictionary:
+	var played_n := 0
+	var won_n := 0
+	var best := -1.0
+	for k in keys:
+		var e := _entry(int(k))
+		played_n += int(e["played"])
+		won_n += int(e["won"])
+		var b := float(e["best"])
+		if b >= 0.0 and (best < 0.0 or b < best):
+			best = b
+	return {"played": played_n, "won": won_n, "best": best}
+
 func _sum(key: String, difficulty: int) -> int:
 	if difficulty >= 0:
 		return int(_entry(difficulty)[key])

@@ -3,19 +3,23 @@ extends RefCounted
 ## undo/redo, hints, mistakes, timer, win/lose. No scene nodes, so it is fully
 ## unit-testable and shared by the 2D and 3D views.
 
-const Solver := preload("res://scripts/logic/solver.gd")
 const Generator := preload("res://scripts/logic/generator.gd")
+const Rules9 := preload("res://scripts/logic/rules_sudoku9.gd")
 
 const MAX_MISTAKES := 3
 
 enum Result { IGNORED, PLACED_OK, PLACED_WRONG, NOTE_TOGGLED, ERASED }
 enum Status { PLAYING, WON, LOST }
 
-var givens: PackedInt32Array = Solver.empty_grid()
-var solution: PackedInt32Array = Solver.empty_grid()
-var grid: PackedInt32Array = Solver.empty_grid()
-## Pencil notes: per-cell 9-bit mask (bit 0 = digit 1).
-var notes: PackedInt32Array = Solver.empty_grid()
+## Puzzle geometry ("rules"): classic 9x9 by default, or the 4x4x4 cube.
+var rules
+var cells := 81
+var digits := 9
+var givens := PackedInt32Array()
+var solution := PackedInt32Array()
+var grid := PackedInt32Array()
+## Pencil notes: per-cell bit mask (bit 0 = digit 1).
+var notes := PackedInt32Array()
 var mistakes := 0
 var hints_used := 0
 var elapsed := 0.0
@@ -26,12 +30,20 @@ var status := Status.PLAYING
 var _undo: Array = []
 var _redo: Array = []
 
+func _init(r = null) -> void:
+	rules = r if r != null else Rules9
+	cells = rules.CELLS
+	digits = rules.DIGITS
+	for a in [givens, solution, grid, notes]:
+		a.resize(cells)
+
 ## Starts a game from generator output ({puzzle, solution, difficulty, seed}).
 func start(data: Dictionary) -> void:
 	givens = data["puzzle"].duplicate()
 	solution = data["solution"].duplicate()
 	grid = givens.duplicate()
-	notes = Solver.empty_grid()
+	notes = PackedInt32Array()
+	notes.resize(cells)
 	difficulty = data.get("difficulty", Generator.Difficulty.MEDIUM)
 	seed_value = data.get("seed", 0)
 	mistakes = 0
@@ -60,28 +72,19 @@ func is_editable(idx: int) -> bool:
 	return status == Status.PLAYING and not is_correct(idx)
 
 ## How many of digit `d` are still to be placed correctly (for number pad badges).
+@warning_ignore("integer_division")
 func remaining(d: int) -> int:
 	var placed := 0
-	for i in Solver.CELLS:
+	for i in cells:
 		if grid[i] == d and solution[i] == d:
 			placed += 1
-	return 9 - placed
+	return cells / digits - placed
 
 ## Row / column / box (as cell-index arrays) that contain `idx` and are now
 ## completely and correctly filled. Used to trigger completion animations.
 func completed_units_at(idx: int) -> Array:
-	var row := []
-	var col := []
-	var box := []
-	for i in Solver.CELLS:
-		if Solver.row_of(i) == Solver.row_of(idx):
-			row.append(i)
-		if Solver.col_of(i) == Solver.col_of(idx):
-			col.append(i)
-		if Solver.box_of(i) == Solver.box_of(idx):
-			box.append(i)
 	var out := []
-	for unit in [row, col, box]:
+	for unit in rules.units_at(idx):
 		var full := true
 		for i in unit:
 			if not is_correct(i):
@@ -99,12 +102,12 @@ func can_redo() -> bool:
 
 ## Enter digit `v` in cell `idx`. Wrong digits are placed (shown red) and cost a mistake.
 func place(idx: int, v: int) -> int:
-	if not is_editable(idx) or grid[idx] == v or v < 1 or v > 9:
+	if not is_editable(idx) or grid[idx] == v or v < 1 or v > digits:
 		return Result.IGNORED
 	return _set_value(idx, v, true)
 
 func toggle_note(idx: int, v: int) -> int:
-	if not is_editable(idx) or grid[idx] != 0 or v < 1 or v > 9:
+	if not is_editable(idx) or grid[idx] != 0 or v < 1 or v > digits:
 		return Result.IGNORED
 	var change := [idx, grid[idx], notes[idx], grid[idx], notes[idx] ^ (1 << (v - 1))]
 	_commit([change], 0)
@@ -123,10 +126,10 @@ func hint(idx: int = -1) -> int:
 		return -1
 	if idx < 0 or not is_editable(idx):
 		var clean := givens.duplicate()
-		for i in Solver.CELLS:
+		for i in cells:
 			if is_correct(i):
 				clean[i] = grid[i]
-		var h := Solver.find_hint(clean, solution)
+		var h: Dictionary = rules.find_hint(clean, solution)
 		if h.is_empty():
 			return -1
 		idx = h["index"]
@@ -157,18 +160,14 @@ func _set_value(idx: int, v: int, count_mistake: bool) -> int:
 	if correct:
 		# Placing a correct digit removes that note from every peer cell.
 		var bit := 1 << (v - 1)
-		for i in Solver.CELLS:
-			if i != idx and (notes[i] & bit) != 0 and _is_peer(i, idx):
+		for i in cells:
+			if i != idx and (notes[i] & bit) != 0 and rules.is_peer(i, idx):
 				changes.append([i, grid[i], notes[i], grid[i], notes[i] & ~bit])
 	var miss := 0
 	if not correct and count_mistake:
 		miss = 1
 	_commit(changes, miss)
 	return Result.PLACED_OK if correct else Result.PLACED_WRONG
-
-func _is_peer(a: int, b: int) -> bool:
-	return Solver.row_of(a) == Solver.row_of(b) or Solver.col_of(a) == Solver.col_of(b) \
-		or Solver.box_of(a) == Solver.box_of(b)
 
 func _commit(changes: Array, miss: int) -> void:
 	_apply(changes, true)

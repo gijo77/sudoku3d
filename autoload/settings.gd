@@ -12,8 +12,9 @@ var vibration := true
 var theme_name := "light"          # see ThemeManager.PALETTES
 var highlight_peers := true        # row / column / box
 var highlight_same := true         # same digit
+var quality_high := true           # shadows + anti-aliasing (turn off for slow phones)
 
-const KEYS := ["sound", "music", "vibration", "theme_name", "highlight_peers", "highlight_same"]
+const KEYS := ["sound", "music", "vibration", "theme_name", "highlight_peers", "highlight_same", "quality_high"]
 
 func _ready() -> void:
 	var cfg := ConfigFile.new()

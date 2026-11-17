@@ -14,6 +14,7 @@ func _ready() -> void:
 	v.add_child(UI.button("New Game", func(): Nav.go("res://scenes/difficulty.tscn")))
 	var done: bool = Stats.data.daily_done(UI.today_key())
 	v.add_child(UI.button("Daily Puzzle" + ("  ✓" if done else ""), func(): Nav.start_game({"mode": "daily"})))
+	v.add_child(UI.button("Cube Sudoku  (bonus)", func(): Nav.go("res://scenes/difficulty.tscn", {"cube": true})))
 	v.add_child(UI.button("Statistics", func(): Nav.go("res://scenes/stats.tscn")))
 	v.add_child(UI.button("Settings", func(): Nav.go("res://scenes/settings.tscn")))
 	if OS.has_feature("pc"):

@@ -15,6 +15,7 @@ func _ready() -> void:
 	_toggle(box, "Vibration", "vibration")
 	_toggle(box, "Highlight row / column / box", "highlight_peers")
 	_toggle(box, "Highlight same numbers", "highlight_same")
+	_toggle(box, "High quality graphics", "quality_high")
 	var row := HBoxContainer.new()
 	row.add_child(UI.label("Theme", 44))
 	row.get_child(0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -39,6 +40,7 @@ func _toggle(parent: Control, text: String, key: String) -> void:
 	b.button_pressed = Settings.get(key)
 	b.custom_minimum_size = Vector2(0, 110)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	UI.style_toggle(b)
 	var upd := func() -> void:
 		b.text = "%s:  %s" % [text, "ON" if b.button_pressed else "OFF"]
 	upd.call()

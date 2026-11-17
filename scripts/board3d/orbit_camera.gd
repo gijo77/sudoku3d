@@ -7,10 +7,8 @@ extends Node3D
 signal tapped(pos: Vector2)
 
 const DEFAULT_YAW := 0.0
-const DEFAULT_PITCH := 62.0   # degrees above the horizon
-const DEFAULT_DIST := 17.0
 const YAW_LIMIT := 30.0
-const PITCH_MIN := 45.0
+const PITCH_MIN := 35.0
 const PITCH_MAX := 85.0
 const DIST_MIN := 12.0
 const DIST_MAX := 30.0
@@ -18,9 +16,12 @@ const TAP_SLOP := 20.0
 const DOUBLE_TAP_TIME := 0.3
 
 var camera: Camera3D
+## Set before adding to the tree: default view (pitch = degrees above the horizon).
+var default_pitch := 62.0
+var default_dist := 17.0
 var yaw := DEFAULT_YAW
-var pitch := DEFAULT_PITCH
-var dist := DEFAULT_DIST
+var pitch := 62.0
+var dist := 17.0
 
 var _press_pos := Vector2.ZERO
 var _pressed := false
@@ -34,6 +35,8 @@ var _last_tap_pos := Vector2.ZERO
 var _reset_tween: Tween
 
 func _ready() -> void:
+	pitch = default_pitch
+	dist = default_dist
 	camera = Camera3D.new()
 	camera.fov = 40.0
 	camera.keep_aspect = Camera3D.KEEP_WIDTH   # board width always fits portrait screens
@@ -51,14 +54,14 @@ func reset_view(animated: bool = true) -> void:
 		_reset_tween.kill()
 	if not animated:
 		yaw = DEFAULT_YAW
-		pitch = DEFAULT_PITCH
-		dist = DEFAULT_DIST
+		pitch = default_pitch
+		dist = default_dist
 		_apply()
 		return
 	var from := Vector3(yaw, pitch, dist)
 	_reset_tween = create_tween()
 	_reset_tween.tween_method(func(t: float) -> void:
-		var v := from.lerp(Vector3(DEFAULT_YAW, DEFAULT_PITCH, DEFAULT_DIST), t)
+		var v := from.lerp(Vector3(DEFAULT_YAW, default_pitch, default_dist), t)
 		yaw = v.x
 		pitch = v.y
 		dist = v.z

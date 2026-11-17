@@ -11,13 +11,17 @@ const Daily := preload("res://scripts/logic/daily.gd")
 const BoardView := preload("res://scripts/ui/board_view_2d.gd")
 const BoardWorld := preload("res://scripts/board3d/world_3d.gd")
 const UI := preload("res://scripts/ui/ui_kit.gd")
+const Cube := preload("res://scripts/logic/cube_sudoku.gd")
+
+## Cube Sudoku stats are stored under difficulty + this offset.
+const CUBE_STATS_OFFSET := 10
 
 var use_3d := true
-var model := Model.new()
+var model
 var view                      # board_view_2d or world_3d (same API)
 var selected := -1
 var notes_mode := false
-var mode := "new"             # "new" | "daily"
+var mode := "new"             # "new" | "daily" | "cube"
 var daily_key := ""
 var paused := false
 var _finished := false
@@ -37,16 +41,31 @@ var _retry_btn: Button
 var _last_second := -1
 
 func _ready() -> void:
-	_build_ui()
 	var p: Dictionary = Nav.params
-	match p.get("mode", "new"):
-		"resume":
-			if not _resume():
-				_start_new(Generator.Difficulty.MEDIUM)
+	var args := OS.get_cmdline_user_args()
+	if "--cube" in args:                       # screenshot helpers (see _demo)
+		p = {"mode": "cube", "difficulty": 1}
+	if "--dark" in args:
+		Settings.theme_name = "dark"
+		ThemeManager.apply()
+	var want: String = p.get("mode", "new")
+	var saved := {}
+	if want == "resume":
+		saved = SaveGame.load_game()
+		want = saved.get("mode", "new")
+	mode = want
+	model = Model.new(Cube if mode == "cube" else null)
+	_build_ui()
+	match want:
+		"cube":
+			if saved.is_empty() or not _resume():
+				_start_cube(p.get("difficulty", Generator.Difficulty.EASY))
 		"daily":
-			_start_daily()
+			if saved.is_empty() or not _resume():
+				_start_daily()
 		_:
-			_start_new(p.get("difficulty", Generator.Difficulty.MEDIUM))
+			if saved.is_empty() or not _resume():
+				_start_new(p.get("difficulty", Generator.Difficulty.MEDIUM))
 	Settings.changed.connect(_apply_settings)
 	_apply_settings()
 	if "--demo" in OS.get_cmdline_user_args():
@@ -100,10 +119,11 @@ func _build_ui() -> void:
 		cont.custom_minimum_size = Vector2(0, 600)
 		root.add_child(cont)
 		var vp := SubViewport.new()
-		vp.msaa_3d = Viewport.MSAA_2X
+		vp.msaa_3d = Viewport.MSAA_2X if Settings.quality_high else Viewport.MSAA_DISABLED
 		vp.handle_input_locally = true
 		cont.add_child(vp)
 		var w := BoardWorld.new()
+		w.cube = mode == "cube"
 		vp.add_child(w)
 		w.cell_tapped.connect(_on_cell_tapped)
 		view = w
@@ -125,13 +145,14 @@ func _build_ui() -> void:
 	_action("Erase", _on_erase, actions)
 	_notes_btn = _action("Notes", _on_notes, actions)
 	_notes_btn.toggle_mode = true
+	UI.style_toggle(_notes_btn)
 	_action("Hint", _on_hint, actions)
 
 	var pad := HBoxContainer.new()
 	pad.add_theme_constant_override("separation", 8)
 	root.add_child(pad)
-	for d in range(1, 10):
-		var b := UI.button(str(d), _on_digit.bind(d), 170)
+	for d in range(1, model.digits + 1):
+		var b := UI.button(str(d), _on_digit.bind(d), 170, false)
 		b.add_theme_font_size_override("font_size", 64)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var badge := Label.new()
@@ -197,6 +218,10 @@ func _start_new(difficulty: int) -> void:
 	mode = "new"
 	_begin(Generator.generate(difficulty))
 
+func _start_cube(difficulty: int) -> void:
+	mode = "cube"
+	_begin(Cube.generate(difficulty))
+
 func _start_daily() -> void:
 	mode = "daily"
 	var d := Time.get_date_dict_from_system()
@@ -209,8 +234,18 @@ func _begin(data: Dictionary) -> void:
 	_finished = false
 	_last_second = -1
 	_end_overlay.visible = false
-	_title_label.text = ("Daily  " + daily_key) if mode == "daily" else Generator.NAMES[model.difficulty]
+	_title_label.text = _title_text()
 	_refresh()
+
+func _title_text() -> String:
+	if mode == "daily":
+		return "Daily  " + daily_key
+	if mode == "cube":
+		return "Cube  " + Generator.NAMES[model.difficulty]
+	return Generator.NAMES[model.difficulty]
+
+func _stats_key() -> int:
+	return model.difficulty + (CUBE_STATS_OFFSET if mode == "cube" else 0)
 
 func _resume() -> bool:
 	var d := SaveGame.load_game()
@@ -219,7 +254,7 @@ func _resume() -> bool:
 	model.from_dict(d["model"])
 	mode = d.get("mode", "new")
 	daily_key = d.get("daily_key", "")
-	_title_label.text = ("Daily  " + daily_key) if mode == "daily" else Generator.NAMES[model.difficulty]
+	_title_label.text = _title_text()
 	_last_second = -1
 	_refresh()
 	return true
@@ -259,7 +294,7 @@ func _apply_settings() -> void:
 func _refresh() -> void:
 	view.set_state(model, selected)
 	_mistakes_label.text = "Mistakes: %d / %d" % [model.mistakes, Model.MAX_MISTAKES]
-	for d in range(1, 10):
+	for d in range(1, model.digits + 1):
 		var left: int = model.remaining(d)
 		_pad_badges[d - 1].text = str(left) if left > 0 else ""
 		_pad_buttons[d - 1].disabled = left == 0
@@ -274,7 +309,7 @@ func _refresh() -> void:
 func _finish(won: bool) -> void:
 	_finished = true
 	SaveGame.clear()
-	var new_best: bool = Stats.data.record(model.difficulty, won, model.elapsed)
+	var new_best: bool = Stats.data.record(_stats_key(), won, model.elapsed)
 	var first_daily := false
 	if won and mode == "daily":
 		first_daily = Stats.data.record_daily(daily_key, model.elapsed)
@@ -300,6 +335,7 @@ func _finish(won: bool) -> void:
 # --- Input -----------------------------------------------------------------
 
 func _on_cell_tapped(idx: int) -> void:
+	Audio.play("select")
 	selected = idx
 	_refresh()
 
@@ -310,24 +346,34 @@ func _on_digit(d: int) -> void:
 		model.toggle_note(selected, d)
 		_refresh()
 	else:
-		var r := model.place(selected, d)
+		var r: int = model.place(selected, d)
 		_refresh()
 		_celebrate(r, selected)
 
 ## Plays tile + completion animations after a placement (no-ops in 2D).
 func _celebrate(result: int, idx: int) -> void:
 	view.play_result(result, idx)
-	if result == Model.Result.PLACED_WRONG and Settings.vibration:
-		Input.vibrate_handheld(80)
-	if result == Model.Result.PLACED_OK:
-		for unit in model.completed_units_at(idx):
+	if result == Model.Result.PLACED_WRONG:
+		Audio.play("wrong")
+		if Settings.vibration:
+			Input.vibrate_handheld(80)
+	elif result == Model.Result.PLACED_OK:
+		Audio.play("place")
+		var units: Array = model.completed_units_at(idx)
+		for unit in units:
 			view.play_wave(unit, idx)
+		if not units.is_empty() and model.status == Model.Status.PLAYING:
+			Audio.play("complete")
 	if model.status == Model.Status.WON:
+		Audio.play("win")
 		view.play_win()
+	elif model.status == Model.Status.LOST:
+		Audio.play("lose")
 
 func _on_erase() -> void:
 	if selected >= 0:
-		model.erase(selected)
+		if model.erase(selected) == Model.Result.ERASED:
+			Audio.play("erase")
 		_refresh()
 
 func _on_undo() -> void:
@@ -342,12 +388,18 @@ func _on_notes() -> void:
 	notes_mode = _notes_btn.button_pressed
 
 func _on_hint() -> void:
-	var idx := model.hint(selected)
+	var idx: int = model.hint(selected)
 	if idx >= 0:
 		selected = idx
 	_refresh()
 	if idx >= 0:
-		_celebrate(Model.Result.PLACED_OK, idx)
+		Audio.play("hint")
+		view.play_result(Model.Result.PLACED_OK, idx)
+		for unit in model.completed_units_at(idx):
+			view.play_wave(unit, idx)
+		if model.status == Model.Status.WON:
+			Audio.play("win")
+			view.play_win()
 
 ## Android back button / Escape.
 func on_back() -> void:
@@ -416,4 +468,6 @@ func _demo() -> void:
 	view.play_result(Model.Result.PLACED_WRONG, j)
 	if use_3d:
 		view.rig.yaw = 12.0
+		if "--top" in OS.get_cmdline_user_args():
+			view.rig.pitch = 80.0
 		view.rig._apply()

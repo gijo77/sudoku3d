@@ -60,12 +60,27 @@ static func label(text: String, size: int = 40, align: int = HORIZONTAL_ALIGNMEN
 	l.horizontal_alignment = align as HorizontalAlignment
 	return l
 
-static func button(text: String, cb: Callable, height: int = 140) -> Button:
+static func button(text: String, cb: Callable, height: int = 140, click: bool = true) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(0, height)
+	if click:
+		b.pressed.connect(func() -> void: Audio.play("click"))
 	b.pressed.connect(cb)
 	return b
+
+## Toggle buttons: dim when off, accent when on.
+static func style_toggle(b: Button) -> void:
+	var accent: Color = ThemeManager.palette["accent"]
+	var off: Color = accent.lerp(ThemeManager.palette["bg"], 0.65)
+	for st in ["normal", "hover"]:
+		b.add_theme_stylebox_override(st, ThemeManager.make_box(off))
+	for st in ["pressed", "hover_pressed"]:
+		b.add_theme_stylebox_override(st, ThemeManager.make_box(accent))
+	b.add_theme_color_override("font_color", ThemeManager.palette["text"])
+	b.add_theme_color_override("font_hover_color", ThemeManager.palette["text"])
+	b.add_theme_color_override("font_pressed_color", Color.WHITE)
+	b.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
 
 static func spacer() -> Control:
 	var c := Control.new()

@@ -6,8 +6,11 @@ signal cell_tapped(idx: int)
 
 const Board := preload("res://scripts/board3d/board_view_3d.gd")
 const Orbit := preload("res://scripts/board3d/orbit_camera.gd")
+const CubeBoard := preload("res://scripts/board3d/cube_board_view.gd")
 
 
+## Set before adding to the tree: true shows the 4x4x4 Cube Sudoku board.
+var cube := false
 var board
 var rig
 
@@ -26,7 +29,7 @@ func _ready() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-58, -30, 0)
 	sun.light_energy = 0.7
-	sun.shadow_enabled = true
+	sun.shadow_enabled = Settings.quality_high
 	sun.shadow_blur = 1.6
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 40.0
@@ -37,16 +40,19 @@ func _ready() -> void:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(80, 80)
 	floor_mesh.mesh = plane
-	floor_mesh.position.y = -0.55
+	floor_mesh.position.y = -6.0 if cube else -0.55   # cube layers reach down to y = -4
 	var fm := StandardMaterial3D.new()
 	fm.albedo_color = BG_COLOR * 0.95
 	fm.roughness = 1.0
 	floor_mesh.material_override = fm
 	add_child(floor_mesh)
 
-	board = Board.new()
+	board = CubeBoard.new() if cube else Board.new()
 	add_child(board)
 	rig = Orbit.new()
+	if cube:
+		rig.default_pitch = 46.0
+		rig.default_dist = 15.0
 	add_child(rig)
 	rig.tapped.connect(_on_tapped)
 

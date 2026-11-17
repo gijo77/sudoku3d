@@ -15,6 +15,11 @@ var confetti: GPUParticles3D
 
 func _ready() -> void:
 	assets = Assets.new()
+	_build_tiles()
+	_build_confetti()
+
+## Classic 9x9: base plate + 81 tiles in the XZ plane.
+func _build_tiles() -> void:
 	var plate := MeshInstance3D.new()
 	var pm := BoxMesh.new()
 	var w := Layout.extent()
@@ -22,29 +27,35 @@ func _ready() -> void:
 	plate.mesh = pm
 	plate.position.y = -Layout.TILE_H / 2.0 - 0.1
 	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.15, 0.17, 0.25)
+	m.albedo_color = ThemeManager.palette["plate"]
 	m.roughness = 0.7
 	plate.material_override = m
 	add_child(plate)
 	for i in 81:
-		var t = Node3D.new()
-		t.set_script(Tile)
-		add_child(t)
-		t.setup(i, assets)
-		tiles.append(t)
-	_build_confetti()
+		_add_tile(i)
+
+func _add_tile(i: int) -> void:
+	var t = Node3D.new()
+	t.set_script(Tile)
+	add_child(t)
+	t.setup(i, assets, _cell_pos(i))
+	tiles.append(t)
+
+## Board-local position of a cell's tile.
+func _cell_pos(i: int) -> Vector3:
+	var c := Layout.cell_center(i)
+	return Vector3(c.x, 0, c.y)
 
 func set_state(model, selected: int) -> void:
 	var sel_digit: int = model.grid[selected] if selected >= 0 else 0
-	for i in 81:
+	for i in tiles.size():
 		var bg: int = Assets.Bg.NORMAL
 		if selected >= 0:
 			if i == selected:
 				bg = Assets.Bg.SELECTED
 			elif highlight_same and sel_digit != 0 and model.grid[i] == sel_digit:
 				bg = Assets.Bg.SAME
-			elif highlight_peers and (i / 9 == selected / 9 or i % 9 == selected % 9 \
-					or (i / 27 == selected / 27 and (i % 9) / 3 == (selected % 9) / 3)):
+			elif highlight_peers and model.rules.is_peer(i, selected):
 				bg = Assets.Bg.PEER
 		var kind: int = Assets.Kind.GIVEN if model.is_given(i) else \
 			(Assets.Kind.WRONG if model.is_wrong(i) else Assets.Kind.PLAYER)
@@ -70,13 +81,13 @@ func play_result(result: int, idx: int) -> void:
 
 ## Wave across `cells` (a completed row / column / box), rippling out from `origin`.
 func play_wave(cells: Array, origin: int) -> void:
-	var o := Layout.cell_center(origin)
+	var o := _cell_pos(origin)
 	for c in cells:
-		tiles[c].wave(o.distance_to(Layout.cell_center(c)) * 0.07)
+		tiles[c].wave(o.distance_to(_cell_pos(c)) * 0.07)
 
 func play_win() -> void:
-	for i in 81:
-		tiles[i].wave(Layout.cell_center(i).length() * 0.07)
+	for i in tiles.size():
+		tiles[i].wave(_cell_pos(i).length() * 0.07)
 	confetti.restart()
 	confetti.emitting = true
 
