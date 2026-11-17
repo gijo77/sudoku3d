@@ -11,7 +11,7 @@ Policies change; confirm each item against the current Play Console UI/help befo
 - [ ] Bump `version/code` (integer, must increase every upload) and `version/name` in `export_presets.cfg`
       (both presets)
 - [ ] Target SDK is **36** (Play requires Android 16 / API 36 for new apps and updates since 2026-08-31) and min SDK 24
-- [ ] No INTERNET permission in the exported manifest (`permissions/internet=false`)
+- [ ] No INTERNET permission in the exported manifest (`permissions/internet=false`); only VIBRATE is declared (`permissions/vibrate=true`)
 - [ ] `CREDITS.md` is accurate; fill the placeholders in `store/privacy_policy.md` and `store/store_listing.md`
 
 ## 1. Build the signed bundle

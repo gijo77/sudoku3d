@@ -22,8 +22,8 @@ This data never leaves your device. You can delete it at any time by clearing th
 Android Settings › Apps › Sudoku 3D › Storage, or by uninstalling the app.
 
 ## Permissions
-The app requests **no special permissions**. Vibration feedback uses a standard device capability that does
-not require access to personal data.
+The app declares only the standard **VIBRATE** permission (for optional haptic feedback, which you can turn off in
+Settings). It requests no access to your contacts, location, camera, microphone, storage or network.
 
 ## Third parties
 The app contains no third-party SDKs for advertising, analytics or tracking.
