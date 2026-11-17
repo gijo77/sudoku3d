@@ -8,7 +8,8 @@ Package: `com.aitechplay.sudoku3d`. No internet permission, ads, analytics or ac
 - [x] Milestone 2: 2D playable prototype
 - [x] Milestone 3: 3D board, orbit camera, animations
 - [x] Milestone 4: menus, daily puzzle, stats, settings, autosave/resume, pause/win/lose, safe area, back button
-- [ ] 5:, polish/audio/themes, 6: Android release
+- [ ] 5: polish, audio, themes, Cube Sudoku
+- [ ] 6: Android export and release
 
 ## Run the tests
 Requires Godot 4.7+ (installed at `~/Applications/Godot.app`, or set `GODOT=/path/to/godot`).
