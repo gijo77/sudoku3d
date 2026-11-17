@@ -1,13 +1,18 @@
 extends Control
-## 2D playable prototype: board, number pad with remaining badges, notes,
+## Game screen: board view (3D or 2D), number pad with remaining badges, notes,
 ## undo/redo, erase, hint, mistakes (max 3), timer. UI is built in code.
+## `use_3d` selects the 3D board (default) or the 2D fallback.
 
 const Model := preload("res://scripts/game/game_model.gd")
 const Generator := preload("res://scripts/logic/generator.gd")
 const BoardView := preload("res://scripts/ui/board_view_2d.gd")
+const BoardWorld := preload("res://scripts/board3d/world_3d.gd")
 
+var use_3d := true
 var model := Model.new()
-var board: Control
+var view                      # board_view_2d or world_3d (same API)
+var selected := -1
+var _end_shown := false
 var notes_mode := false
 var _mistakes_label: Label
 var _timer_label: Label
@@ -27,6 +32,8 @@ func _ready() -> void:
 	theme = th
 	_build_ui()
 	_new_game(Generator.Difficulty.MEDIUM)
+	if "--demo" in OS.get_cmdline_user_args():
+		_demo()
 
 func _process(delta: float) -> void:
 	model.tick(delta)
@@ -71,14 +78,29 @@ func _build_ui() -> void:
 	_timer_label.add_theme_font_size_override("font_size", 44)
 	info.add_child(_timer_label)
 
-	var ratio := AspectRatioContainer.new()
-	ratio.ratio = 1.0
-	ratio.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(ratio)
-	board = BoardView.new()
-	board.model = model
-	board.cell_tapped.connect(_on_cell_tapped)
-	ratio.add_child(board)
+	if use_3d:
+		var cont := SubViewportContainer.new()
+		cont.stretch = true
+		cont.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cont.custom_minimum_size = Vector2(0, 600)
+		root.add_child(cont)
+		var vp := SubViewport.new()
+		vp.msaa_3d = Viewport.MSAA_2X
+		vp.handle_input_locally = true
+		cont.add_child(vp)
+		var w := BoardWorld.new()
+		vp.add_child(w)
+		w.cell_tapped.connect(_on_cell_tapped)
+		view = w
+	else:
+		var ratio := AspectRatioContainer.new()
+		ratio.ratio = 1.0
+		ratio.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		root.add_child(ratio)
+		var b2d := BoardView.new()
+		b2d.cell_tapped.connect(_on_cell_tapped)
+		ratio.add_child(b2d)
+		view = b2d
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 14)
@@ -132,12 +154,13 @@ func _action(text: String, cb: Callable, parent: Control) -> Button:
 
 func _new_game(difficulty: int) -> void:
 	model.start(Generator.generate(difficulty))
-	board.selected = -1
+	selected = -1
+	_end_shown = false
 	_last_second = -1
 	_refresh()
 
 func _refresh() -> void:
-	board.queue_redraw()
+	view.set_state(model, selected)
 	_mistakes_label.text = "Mistakes: %d / %d" % [model.mistakes, Model.MAX_MISTAKES]
 	for d in range(1, 10):
 		var left: int = model.remaining(d)
@@ -145,10 +168,15 @@ func _refresh() -> void:
 		_pad_buttons[d - 1].disabled = left == 0
 	_undo_btn.disabled = not model.can_undo()
 	_redo_btn.disabled = not model.can_redo()
-	if model.status == Model.Status.WON:
-		_show_end("You win!", "Solved in %s with %d mistakes." % [_timer_label.text, model.mistakes])
-	elif model.status == Model.Status.LOST:
-		_show_end("Game over", "Too many mistakes.")
+	if model.status != Model.Status.PLAYING and not _end_shown:
+		_end_shown = true
+		var won := model.status == Model.Status.WON
+		var delay := 2.2 if won else 0.6   # let the win celebration play first
+		get_tree().create_timer(delay).timeout.connect(func() -> void:
+			if won:
+				_show_end("You win!", "Solved in %s with %d mistakes." % [_timer_label.text, model.mistakes])
+			else:
+				_show_end("Game over", "Too many mistakes."))
 
 func _show_end(title: String, text: String) -> void:
 	_end_dialog.title = title
@@ -156,21 +184,32 @@ func _show_end(title: String, text: String) -> void:
 	_end_dialog.popup_centered(Vector2i(700, 300))
 
 func _on_cell_tapped(idx: int) -> void:
-	board.selected = idx
+	selected = idx
 	_refresh()
 
 func _on_digit(d: int) -> void:
-	if board.selected < 0:
+	if selected < 0:
 		return
 	if notes_mode:
-		model.toggle_note(board.selected, d)
+		model.toggle_note(selected, d)
+		_refresh()
 	else:
-		model.place(board.selected, d)
-	_refresh()
+		var r := model.place(selected, d)
+		_refresh()
+		_celebrate(r, selected)
+
+## Plays tile + completion animations after a placement (no-ops in 2D).
+func _celebrate(result: int, idx: int) -> void:
+	view.play_result(result, idx)
+	if result == Model.Result.PLACED_OK:
+		for unit in model.completed_units_at(idx):
+			view.play_wave(unit, idx)
+	if model.status == Model.Status.WON:
+		view.play_win()
 
 func _on_erase() -> void:
-	if board.selected >= 0:
-		model.erase(board.selected)
+	if selected >= 0:
+		model.erase(selected)
 		_refresh()
 
 func _on_undo() -> void:
@@ -185,10 +224,12 @@ func _on_notes() -> void:
 	notes_mode = _notes_btn.button_pressed
 
 func _on_hint() -> void:
-	var idx := model.hint(board.selected)
+	var idx := model.hint(selected)
 	if idx >= 0:
-		board.selected = idx
+		selected = idx
 	_refresh()
+	if idx >= 0:
+		_celebrate(Model.Result.PLACED_OK, idx)
 
 ## Desktop convenience: number keys, backspace, arrows, N for notes, Z undo.
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -206,11 +247,40 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_on_undo()
 	elif k == KEY_H:
 		_on_hint()
-	elif k >= KEY_LEFT and k <= KEY_DOWN and board.selected >= 0:
-		var s: int = board.selected
+	elif k >= KEY_LEFT and k <= KEY_DOWN and selected >= 0:
+		var s: int = selected
 		match k:
 			KEY_LEFT: s = s - 1 if s % 9 > 0 else s
 			KEY_RIGHT: s = s + 1 if s % 9 < 8 else s
 			KEY_UP: s = s - 9 if s >= 9 else s
 			KEY_DOWN: s = s + 9 if s < 72 else s
 		_on_cell_tapped(s)
+
+## Screenshot helper: `godot --path . --write-movie out.png -- --demo`.
+func _demo() -> void:
+	await get_tree().create_timer(0.3).timeout
+	if "--win" in OS.get_cmdline_user_args():
+		for i in 81:
+			if model.grid[i] == 0:
+				model.place(i, model.solution[i])
+		_refresh()
+		_celebrate(Model.Result.PLACED_OK, 40)
+		return
+	for n in 4:
+		_on_hint()
+	selected = -1
+	for i in 81:
+		if model.grid[i] == 0:
+			selected = i
+			break
+	model.toggle_note(selected, 3)
+	model.toggle_note(selected, 7)
+	var j := selected + 1
+	while model.grid[j] != 0:
+		j += 1
+	model.place(j, (model.solution[j] % 9) + 1)
+	_refresh()
+	view.play_result(Model.Result.PLACED_WRONG, j)
+	if use_3d:
+		view.rig.yaw = 12.0
+		view.rig._apply()

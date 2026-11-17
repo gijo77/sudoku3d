@@ -67,6 +67,30 @@ func remaining(d: int) -> int:
 			placed += 1
 	return 9 - placed
 
+## Row / column / box (as cell-index arrays) that contain `idx` and are now
+## completely and correctly filled. Used to trigger completion animations.
+func completed_units_at(idx: int) -> Array:
+	var row := []
+	var col := []
+	var box := []
+	for i in Solver.CELLS:
+		if Solver.row_of(i) == Solver.row_of(idx):
+			row.append(i)
+		if Solver.col_of(i) == Solver.col_of(idx):
+			col.append(i)
+		if Solver.box_of(i) == Solver.box_of(idx):
+			box.append(i)
+	var out := []
+	for unit in [row, col, box]:
+		var full := true
+		for i in unit:
+			if not is_correct(i):
+				full = false
+				break
+		if full:
+			out.append(unit)
+	return out
+
 func can_undo() -> bool:
 	return status == Status.PLAYING and not _undo.is_empty()
 

@@ -152,3 +152,13 @@ func test_serialize_roundtrip() -> void:
 	assert_eq(m2.notes, m.notes, "notes")
 	assert_eq(m2.elapsed, 12.0, "elapsed")
 	assert_eq(m2.mistakes, m.mistakes, "mistakes")
+
+func test_completed_units() -> void:
+	var m = _new()
+	var target := _first_empty(m)
+	for i in 81:
+		if m.grid[i] == 0 and i != target:
+			m.place(i, m.solution[i])
+	assert_eq(m.completed_units_at(target).size(), 0, "nothing complete yet")
+	m.place(target, m.solution[target])
+	assert_eq(m.completed_units_at(target).size(), 3, "row, column and box complete")

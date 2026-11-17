@@ -22,6 +22,21 @@ const C_NOTE := Color(0.40, 0.44, 0.52)
 const C_THIN := Color(0.72, 0.75, 0.80)
 const C_THICK := Color(0.12, 0.14, 0.20)
 
+## View API shared with the 3D board.
+func set_state(m, sel: int) -> void:
+	model = m
+	selected = sel
+	queue_redraw()
+
+func play_result(_result: int, _idx: int) -> void:
+	pass
+
+func play_wave(_cells: Array, _origin: int) -> void:
+	pass
+
+func play_win() -> void:
+	pass
+
 func _side() -> float:
 	return minf(size.x, size.y)
 
