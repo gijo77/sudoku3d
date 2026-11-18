@@ -49,6 +49,6 @@ Download Sudoku 3D and give your brain a calm, beautiful workout.
 First release: classic 3D Sudoku with four difficulty levels, daily puzzle, statistics, themes and the 3D Cube Sudoku bonus mode.
 
 ## Contact / links (fill in before publishing)
-- Developer email: <YOUR_SUPPORT_EMAIL>
-- Privacy policy URL: <URL where you host store/privacy_policy.md, e.g. a GitHub Pages / Gist page>
-- Website (optional): <URL>
+- Developer email: eshaji90@gmail.com
+- Privacy policy URL: https://gijo77.github.io/sudoku3d/
+- Website (optional): https://github.com/gijo77/sudoku3d

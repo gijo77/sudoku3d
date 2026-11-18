@@ -1,9 +1,9 @@
 # Privacy Policy — Sudoku 3D
 
-_Last updated: <DATE>_
+_Last updated: 2026-11-18_
 
 This policy describes how the **Sudoku 3D** app (package `com.aitechplay.sudoku3d`, "the app") handles
-information. It is provided by **<YOUR NAME / COMPANY>** ("we", "us"). Contact: **<YOUR_SUPPORT_EMAIL>**.
+information. It is provided by **Gijo** ("we", "us"). Contact: **eshaji90@gmail.com**.
 
 ## Summary
 **The app does not collect, store on our servers, share or sell any personal data.**
@@ -36,7 +36,7 @@ If the app's data practices ever change (for example, if ads or online features 
 policy and the Play Store listing before releasing that version.
 
 ## Contact
-Questions about this policy: **<YOUR_SUPPORT_EMAIL>**
+Questions about this policy: **eshaji90@gmail.com**
 
 ---
 _Host this page at a public URL (for example GitHub Pages) and enter that URL in Play Console › App content › Privacy policy._
