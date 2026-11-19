@@ -16,6 +16,7 @@ in-app purchases. The app does not request the INTERNET permission, so it cannot
 To work offline, the app saves the following **only on your device**, in its private app storage:
 - your settings (sound, music, vibration, theme, highlight options, graphics quality);
 - your game statistics (games played, wins, best times, completed daily puzzles);
+- your rewards progress (XP, rank and medals earned);
 - your game in progress, so you can resume it.
 
 This data never leaves your device. You can delete it at any time by clearing the app's storage in

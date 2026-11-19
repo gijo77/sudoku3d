@@ -69,6 +69,30 @@ static func button(text: String, cb: Callable, height: int = 140, click: bool = 
 	b.pressed.connect(cb)
 	return b
 
+const Glyph := preload("res://scripts/ui/glyph_icon.gd")
+
+## Button with a vector icon above a label (menu cards, action bar).
+static func icon_button(text: String, glyph: String, cb: Callable, height: int = 140, size: int = 52, horizontal: bool = false) -> Button:
+	var b := button("", cb, height)
+	var box: BoxContainer = HBoxContainer.new() if horizontal else VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 14 if horizontal else 4)
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon: Control = Glyph.make(glyph, size, Color.WHITE)
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(icon)
+	if text != "":
+		var l := Label.new()
+		l.text = text
+		l.add_theme_font_size_override("font_size", 32 if not horizontal else 44)
+		l.add_theme_color_override("font_color", Color.WHITE)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(l)
+	b.add_child(box)
+	return b
+
 ## Toggle buttons: dim when off, accent when on.
 static func style_toggle(b: Button) -> void:
 	var accent: Color = ThemeManager.palette["accent"]

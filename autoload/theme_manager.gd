@@ -38,11 +38,28 @@ func apply() -> void:
 	RenderingServer.set_default_clear_color(palette["bg"])
 	theme_changed.emit()
 
-func make_box(color: Color, radius: int = 28, margin: int = 16) -> StyleBoxFlat:
+## `raised` gives buttons the plate look from the design sheet: a darker lip under
+## the face and a soft drop shadow. Panels and flat fills pass raised = false.
+func make_box(color: Color, radius: int = 28, margin: int = 16, raised: bool = true) -> StyleBoxFlat:
 	var b := StyleBoxFlat.new()
 	b.bg_color = color
 	b.set_corner_radius_all(radius)
 	b.set_content_margin_all(margin)
+	if raised:
+		b.border_width_bottom = 8
+		b.border_color = color.darkened(0.32)
+		b.shadow_color = Color(0, 0, 0, 0.22)
+		b.shadow_size = 8
+		b.shadow_offset = Vector2(0, 6)
+		b.content_margin_bottom = margin
+	return b
+
+## Pressed state: the plate sinks (thin lip, no shadow).
+func _sunk(color: Color) -> StyleBoxFlat:
+	var b := make_box(color, 28, 16, false)
+	b.border_width_bottom = 3
+	b.border_color = color.darkened(0.3)
+	b.content_margin_top = 18
 	return b
 
 func _build_theme() -> void:
@@ -53,9 +70,9 @@ func _build_theme() -> void:
 	for type in ["Button", "OptionButton"]:
 		t.set_stylebox("normal", type, make_box(accent))
 		t.set_stylebox("hover", type, make_box(accent.lightened(0.12)))
-		t.set_stylebox("pressed", type, make_box(accent.darkened(0.25)))
-		t.set_stylebox("hover_pressed", type, make_box(accent.darkened(0.25)))
-		t.set_stylebox("disabled", type, make_box(accent.lerp(palette["bg"], 0.7)))
+		t.set_stylebox("pressed", type, _sunk(accent.darkened(0.25)))
+		t.set_stylebox("hover_pressed", type, _sunk(accent.darkened(0.25)))
+		t.set_stylebox("disabled", type, make_box(accent.lerp(palette["bg"], 0.7), 28, 16, false))
 		t.set_stylebox("focus", type, StyleBoxEmpty.new())
 		for c in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 			t.set_color(c, type, Color.WHITE)
@@ -66,5 +83,5 @@ func _build_theme() -> void:
 	t.set_font_size("font_size", "CheckButton", 44)
 	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
 		t.set_color(c, "CheckButton", text)
-	t.set_stylebox("panel", "PanelContainer", make_box(palette["panel"], 36, 36))
+	t.set_stylebox("panel", "PanelContainer", make_box(palette["panel"], 36, 36, false))
 	theme = t

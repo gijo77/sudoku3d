@@ -12,6 +12,9 @@ const BoardView := preload("res://scripts/ui/board_view_2d.gd")
 const BoardWorld := preload("res://scripts/board3d/world_3d.gd")
 const UI := preload("res://scripts/ui/ui_kit.gd")
 const Cube := preload("res://scripts/logic/cube_sudoku.gd")
+const Glyph := preload("res://scripts/ui/glyph_icon.gd")
+const RewardsData := preload("res://scripts/game/rewards_data.gd")
+const MEDAL_GLYPHS := {"winner": "trophy", "flawless": "shield", "streak": "flame", "cube": "cube", "speed": "bolt", "expert": "star"}
 
 ## Cube Sudoku stats are stored under difficulty + this offset.
 const CUBE_STATS_OFFSET := 10
@@ -26,7 +29,8 @@ var daily_key := ""
 var paused := false
 var _finished := false
 var _title_label: Label
-var _mistakes_label: Label
+var _hearts: Array = []
+var _end_extra: VBoxContainer
 var _timer_label: Label
 var _pad_buttons: Array[Button] = []
 var _pad_badges: Array[Label] = []
@@ -97,7 +101,7 @@ func _build_ui() -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 20)
 	root.add_child(top)
-	var pause_btn := UI.button("II", func(): _set_paused(true), 100)
+	var pause_btn := UI.icon_button("", "pause", func(): _set_paused(true), 100, 44)
 	pause_btn.custom_minimum_size.x = 130
 	top.add_child(pause_btn)
 	_title_label = UI.label("", 44, HORIZONTAL_ALIGNMENT_CENTER)
@@ -109,8 +113,16 @@ func _build_ui() -> void:
 	_timer_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(_timer_label)
 
-	_mistakes_label = UI.label("", 40, HORIZONTAL_ALIGNMENT_CENTER)
-	root.add_child(_mistakes_label)
+	var hearts := HBoxContainer.new()
+	hearts.alignment = BoxContainer.ALIGNMENT_CENTER
+	hearts.add_theme_constant_override("separation", 14)
+	hearts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(hearts)
+	for i in Model.MAX_MISTAKES:
+		var h: Control = Glyph.make("heart", 56, Color("FF6B6B"))
+		h.filled = true
+		hearts.add_child(h)
+		_hearts.append(h)
 
 	if use_3d:
 		var cont := SubViewportContainer.new()
@@ -140,13 +152,13 @@ func _build_ui() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 14)
 	root.add_child(actions)
-	_undo_btn = _action("Undo", _on_undo, actions)
-	_redo_btn = _action("Redo", _on_redo, actions)
-	_action("Erase", _on_erase, actions)
-	_notes_btn = _action("Notes", _on_notes, actions)
+	_undo_btn = _action("Undo", "undo", _on_undo, actions)
+	_redo_btn = _action("Redo", "redo", _on_redo, actions)
+	_action("Erase", "erase", _on_erase, actions)
+	_notes_btn = _action("Notes", "notes", _on_notes, actions)
 	_notes_btn.toggle_mode = true
 	UI.style_toggle(_notes_btn)
-	_action("Hint", _on_hint, actions)
+	_action("Hint", "hint", _on_hint, actions)
 
 	var pad := HBoxContainer.new()
 	pad.add_theme_constant_override("separation", 8)
@@ -171,9 +183,8 @@ func _build_ui() -> void:
 	_build_pause_overlay()
 	_build_end_overlay()
 
-func _action(text: String, cb: Callable, parent: Control) -> Button:
-	var b := UI.button(text, cb, 100)
-	b.add_theme_font_size_override("font_size", 34)
+func _action(text: String, glyph: String, cb: Callable, parent: Control) -> Button:
+	var b := UI.icon_button(text, glyph, cb, 120, 40)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(b)
 	return b
@@ -207,6 +218,9 @@ func _build_end_overlay() -> void:
 	_end_text = UI.label("", 44, HORIZONTAL_ALIGNMENT_CENTER)
 	_end_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(_end_text)
+	_end_extra = VBoxContainer.new()
+	_end_extra.add_theme_constant_override("separation", 14)
+	v.add_child(_end_extra)
 	v.add_child(UI.button("New game", func(): Nav.go("res://scenes/difficulty.tscn")))
 	_retry_btn = UI.button("Try this puzzle again", _restart)
 	v.add_child(_retry_btn)
@@ -293,7 +307,9 @@ func _apply_settings() -> void:
 
 func _refresh() -> void:
 	view.set_state(model, selected)
-	_mistakes_label.text = "Mistakes: %d / %d" % [model.mistakes, Model.MAX_MISTAKES]
+	for i in _hearts.size():
+		_hearts[i].color = Color("FF6B6B") if i >= model.mistakes else ThemeManager.palette["dim"].lerp(ThemeManager.palette["bg"], 0.55)
+		_hearts[i].queue_redraw()
 	for d in range(1, model.digits + 1):
 		var left: int = model.remaining(d)
 		_pad_badges[d - 1].text = str(left) if left > 0 else ""
@@ -314,6 +330,10 @@ func _finish(won: bool) -> void:
 	if won and mode == "daily":
 		first_daily = Stats.data.record_daily(daily_key, model.elapsed)
 	Stats.save()
+	var reward: Dictionary = Rewards.data.apply_result(model.difficulty, won, model.mistakes, model.elapsed,
+		mode == "cube", first_daily, Stats.data.daily_streak(UI.today_key()))
+	Rewards.save()
+	_show_rewards(reward)
 	AdsHook.on_game_finished()
 	if won:
 		var txt := "Solved in %s with %d mistake(s)." % [UI.fmt_time(model.elapsed), model.mistakes]
@@ -331,6 +351,46 @@ func _finish(won: bool) -> void:
 	var delay := 2.2 if won else 0.7   # let the win celebration play first
 	get_tree().create_timer(delay).timeout.connect(func() -> void:
 		_end_overlay.visible = true)
+
+## Fills the end overlay with the XP breakdown, rank progress, new medals and unlocked themes.
+func _show_rewards(res: Dictionary) -> void:
+	for c in _end_extra.get_children():
+		c.queue_free()
+	var xp_l := UI.label("+%d XP" % res["xp"], 72, HORIZONTAL_ALIGNMENT_CENTER)
+	xp_l.add_theme_color_override("font_color", ThemeManager.palette["accent"])
+	_end_extra.add_child(xp_l)
+	var parts: Array = []
+	for p in res["parts"]:
+		parts.append("%s +%d" % [p[0], p[1]])
+	var pl := UI.label("  ·  ".join(parts), 32, HORIZONTAL_ALIGNMENT_CENTER)
+	pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pl.add_theme_color_override("font_color", ThemeManager.palette["dim"])
+	_end_extra.add_child(pl)
+	var pr: Dictionary = Rewards.data.progress()
+	var rank_txt := "Rank %d · %d / %d XP" % [pr["rank"], pr["into"], pr["need"]]
+	if res["rank_after"] > res["rank_before"]:
+		rank_txt = "Rank up! You are now Rank %d, %s" % [res["rank_after"], RewardsData.title_for_rank(res["rank_after"])]
+	_end_extra.add_child(UI.label(rank_txt, 38, HORIZONTAL_ALIGNMENT_CENTER))
+	if not res["new_medals"].is_empty():
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 28)
+		for m in res["new_medals"]:
+			var info: Dictionary = {}
+			for d in RewardsData.MEDALS:
+				if d["id"] == m["id"]:
+					info = d
+			var col := VBoxContainer.new()
+			var icon: Control = Glyph.make_medal(MEDAL_GLYPHS[m["id"]], m["tier"], 170)
+			icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			col.add_child(icon)
+			col.add_child(UI.label("%s %s" % [RewardsData.TIER_NAMES[m["tier"]], info["name"]], 30, HORIZONTAL_ALIGNMENT_CENTER))
+			row.add_child(col)
+		_end_extra.add_child(row)
+	for key in res["new_themes"]:
+		var t := UI.label("Unlocked: %s theme" % ThemeManager.PALETTES[key]["label"], 38, HORIZONTAL_ALIGNMENT_CENTER)
+		t.add_theme_color_override("font_color", ThemeManager.palette["accent"])
+		_end_extra.add_child(t)
 
 # --- Input -----------------------------------------------------------------
 

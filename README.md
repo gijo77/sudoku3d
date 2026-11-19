@@ -54,6 +54,14 @@ Android back button / Esc pauses in-game and goes back in menus. Data is stored 
   `GameModel` is shared by both modes through a small "rules" adapter. Drag to rotate (lower the camera to see the layers).
 - Screenshot helpers (dev only): `-- --demo`, `--cube`, `--dark`, `--win`, `--top` after `--write-movie`.
 
+## Rewards and restyled UI (v1.1.0)
+- `scripts/game/rewards_data.gd` (unit-tested in `tests/test_rewards.gd`): XP per game, ranks, six medals with
+  Bronze / Silver / Gold tiers, and rank-gated themes (Ocean rank 3, Forest rank 6, Sunset rank 10).
+  Stored locally in `user://rewards.json` through the `Rewards` autoload. No currency, no purchases, no network.
+- `scenes/rewards.tscn`: rank ring, 7-day daily streak, medals grid and theme unlocks. The win overlay shows XP, rank-up, new medals.
+- `scripts/ui/glyph_icon.gd`: all icons and medals are drawn in code (no image files). Buttons use a raised-plate style (lip + shadow) from `ThemeManager.make_box`.
+- Settings has a Privacy policy button and a theme picker that locks themes by rank.
+
 ## Android build and release (M6)
 Package `com.aitechplay.sudoku3d`, min SDK 24, target SDK 36, portrait, no INTERNET permission, arm64 + armv7 (debug also x86_64).
 Presets are in `export_presets.cfg`: **Android Debug APK** and **Android Release AAB** (Gradle build).

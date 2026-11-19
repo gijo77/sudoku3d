@@ -1,7 +1,10 @@
 extends Control
-## Settings: sound, music, vibration, theme, highlight options.
+## Settings: sound, music, vibration, highlights, graphics, rank-gated themes and the privacy policy.
 
 const UI := preload("res://scripts/ui/ui_kit.gd")
+const RewardsData := preload("res://scripts/game/rewards_data.gd")
+
+const PRIVACY_URL := "https://gijo77.github.io/sudoku3d/"
 
 func _ready() -> void:
 	var v := UI.make_screen(self, "Settings")
@@ -16,23 +19,48 @@ func _ready() -> void:
 	_toggle(box, "Highlight row / column / box", "highlight_peers")
 	_toggle(box, "Highlight same numbers", "highlight_same")
 	_toggle(box, "High quality graphics", "quality_high")
-	var row := HBoxContainer.new()
-	row.add_child(UI.label("Theme", 44))
-	row.get_child(0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var opt := OptionButton.new()
-	opt.custom_minimum_size = Vector2(380, 110)
-	var i := 0
-	for key in ThemeManager.PALETTES:
-		opt.add_item(ThemeManager.PALETTES[key]["label"], i)
-		opt.set_item_metadata(i, key)
-		if key == Settings.theme_name:
-			opt.select(i)
-		i += 1
-	opt.item_selected.connect(func(idx: int) -> void: Settings.set_value("theme_name", opt.get_item_metadata(idx)))
-	row.add_child(opt)
-	box.add_child(row)
+	v.add_child(UI.label("Theme", 48))
+	v.add_child(_theme_row())
+	var hint := UI.label("Ocean, Forest and Sunset unlock as you rank up.", 30)
+	hint.add_theme_color_override("font_color", ThemeManager.palette["dim"])
+	v.add_child(hint)
 	v.add_child(UI.spacer())
+	v.add_child(UI.button("Privacy policy", func(): OS.shell_open(PRIVACY_URL), 110))
 	v.add_child(UI.button("Back", on_back))
+
+## One raised tile per theme; locked themes show their unlock rank and cannot be picked.
+func _theme_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	for key in ThemeManager.PALETTES:
+		var p: Dictionary = ThemeManager.PALETTES[key]
+		var open: bool = Rewards.data.theme_unlocked(key)
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(0, 170)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.disabled = not open
+		b.text = "%s\n%s" % [p["label"], "" if open else "Rank %d" % RewardsData.theme_rank(key)]
+		b.add_theme_font_size_override("font_size", 28)
+		var face: Color = p["accent"] if open else p["tile"].darkened(0.3)
+		for st in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+			var sb := ThemeManager.make_box(face, 24, 8)
+			if key == Settings.theme_name:
+				sb.border_width_left = 6
+				sb.border_width_right = 6
+				sb.border_width_top = 6
+				sb.border_color = ThemeManager.palette["accent"].lightened(0.2)
+			b.add_theme_stylebox_override(st, sb)
+		b.add_theme_color_override("font_color", Color.WHITE)
+		b.add_theme_color_override("font_hover_color", Color.WHITE)
+		b.add_theme_color_override("font_pressed_color", Color.WHITE)
+		b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.85))
+		var k: String = key
+		b.pressed.connect(func() -> void:
+			Audio.play("click")
+			Settings.set_value("theme_name", k)
+			Nav.go("res://scenes/settings.tscn"))
+		row.add_child(b)
+	return row
 
 func _toggle(parent: Control, text: String, key: String) -> void:
 	var b := Button.new()
