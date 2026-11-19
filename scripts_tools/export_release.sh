@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source scripts_tools/_env.sh
 [ -f android/build/build.gradle ] || { echo "Android build template missing. Run scripts_tools/setup_android.sh first."; exit 1; }
+./scripts_tools/patch_manifest.sh
 ENVF="${KEYSTORE_ENV:-$HOME/sudoku3d-keystore/keystore.env}"
 if [ -z "${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:-}" ]; then
   [ -f "$ENVF" ] || { echo "No release keystore. Run scripts_tools/make_keystore.sh first (or set KEYSTORE_ENV=/path/keystore.env)."; exit 1; }

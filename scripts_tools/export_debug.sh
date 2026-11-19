@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 source scripts_tools/_env.sh
 [ -f android/build/build.gradle ] || { echo "Android build template missing. Run scripts_tools/setup_android.sh first."; exit 1; }
+./scripts_tools/patch_manifest.sh
 case "$(uname -s)" in
   Darwin) KS_DIR="$HOME/Library/Application Support/Godot/keystores";;
   *) KS_DIR="$HOME/.config/godot/keystores";;
