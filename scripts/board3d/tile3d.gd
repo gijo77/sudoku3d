@@ -50,7 +50,15 @@ func apply(bg: int, value: int, kind: int, notes: int) -> void:
 		_num.visible = value != 0
 		if value != 0:
 			_num.mesh = _assets.digit_meshes[value]
-			_num.material_override = _assets.text_mats[kind]
+	# Selected tile: dark ink digit; a wrong digit turns the whole tile rose.
+	var sel := bg == Assets.Bg.SELECTED
+	var bm = _assets.sel_wrong_mat if sel and value != 0 and kind == Assets.Kind.WRONG else _assets.tile_mats[bg]
+	if _box.material_override != bm:
+		_box.material_override = bm
+	if value != 0:
+		var tm = _assets.sel_text_mat if sel else _assets.text_mats[kind]
+		if _num.material_override != tm:
+			_num.material_override = tm
 	if notes != _notes:
 		_notes = notes
 		_update_notes()

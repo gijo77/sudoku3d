@@ -62,6 +62,16 @@ Android back button / Esc pauses in-game and goes back in menus. Data is stored 
 - `scripts/ui/glyph_icon.gd`: all icons and medals are drawn in code (no image files). Buttons use a raised-plate style (lip + shadow) from `ThemeManager.make_box`.
 - Settings has a Privacy policy button and a theme picker that locks themes by rank.
 
+## Neon Lattice UI (v1.2.0)
+Futuristic restyle of every screen, following the "Sudoku 3D Neon UI" design canvas.
+- `autoload/theme_manager.gd`: neon palettes (Dark is the default; Light, Ocean, Forest, Sunset keep their rank gates),
+  glass panels (`glass()`), glowing fills (`fill()`, `style_primary()`), and fonts. Fonts load from
+  `assets/fonts/SpaceGrotesk.ttf`, `Inter.ttf`, `JetBrainsMono.ttf` when present, otherwise the engine font is used.
+- `scripts/ui/ui_kit.gd`: headers, cards, chips, switches, segmented controls, stat tiles and the bottom nav dock.
+  `lattice.gd` (grid background + glows), `ring.gd`, `bar.gd`, `iso_art.gd` (menu logo, splash cube) draw in code.
+- 3D board: emissive selected tile and player digits, glowing box dividers and rim, bloom when High quality is on.
+- Screenshot flags for the game scene: `--demo` plus `--pause`, `--lose`, `--win` or `--cube`.
+
 ## Android build and release (M6)
 Package `com.aitechplay.sudoku3d`, min SDK 24, target SDK 36, portrait, no INTERNET permission, arm64 + armv7 (debug also x86_64).
 Presets are in `export_presets.cfg`: **Android Debug APK** and **Android Release AAB** (Gradle build).

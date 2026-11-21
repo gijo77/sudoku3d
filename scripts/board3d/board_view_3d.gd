@@ -31,8 +31,32 @@ func _build_tiles() -> void:
 	m.roughness = 0.7
 	plate.material_override = m
 	add_child(plate)
+	_build_lines(w)
 	for i in 81:
 		_add_tile(i)
+
+## Glowing divider bars in the gaps between the 3 x 3 boxes plus a rim.
+func _build_lines(w: float) -> void:
+	var mat: StandardMaterial3D = assets.line_mat()
+	var y := -Layout.TILE_H / 2.0 + 0.03
+	var cuts := [(Layout.axis_pos(2) + Layout.axis_pos(3)) / 2.0, (Layout.axis_pos(5) + Layout.axis_pos(6)) / 2.0]
+	var half := w / 2.0
+	for c in cuts:
+		_bar(Vector3(c, y, 0), Vector3(0.045, 0.03, w - 0.1), mat)
+		_bar(Vector3(0, y, c), Vector3(w - 0.1, 0.03, 0.045), mat)
+	for sgn in [-1.0, 1.0]:
+		_bar(Vector3(sgn * half, y - 0.05, 0), Vector3(0.05, 0.05, w + 0.05), mat)
+		_bar(Vector3(0, y - 0.05, sgn * half), Vector3(w + 0.05, 0.05, 0.05), mat)
+
+func _bar(pos: Vector3, sz: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = sz
+	mi.mesh = bm
+	mi.material_override = mat
+	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
 
 func _add_tile(i: int) -> void:
 	var t = Node3D.new()

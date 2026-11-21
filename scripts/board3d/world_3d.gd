@@ -15,10 +15,15 @@ var board
 var rig
 
 func _ready() -> void:
-	var BG_COLOR: Color = ThemeManager.palette["bg"]
+	var BG_COLOR: Color = ThemeManager.bay_color()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = BG_COLOR
+	if Settings.quality_high and not ThemeManager.is_light():
+		env.glow_enabled = true
+		env.glow_intensity = 0.7
+		env.glow_bloom = 0.05
+		env.glow_hdr_threshold = 0.9
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(1, 1, 1)
 	env.ambient_light_energy = 0.45
@@ -42,7 +47,9 @@ func _ready() -> void:
 	floor_mesh.mesh = plane
 	floor_mesh.position.y = -6.0 if cube else -0.55   # cube layers reach down to y = -4
 	var fm := StandardMaterial3D.new()
-	fm.albedo_color = BG_COLOR * 0.95
+	fm.albedo_color = BG_COLOR
+	# unshaded so the floor matches the glass bay around the 3D view exactly
+	fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	fm.roughness = 1.0
 	floor_mesh.material_override = fm
 	add_child(floor_mesh)

@@ -28,6 +28,11 @@ func _build_tiles() -> void:
 		m.roughness = 0.7
 		plate.material_override = m
 		add_child(plate)
+		var y := plate.position.y
+		var lm: StandardMaterial3D = assets.line_mat()
+		for sgn in [-1.0, 1.0]:
+			_bar(Vector3(sgn * w / 2.0, y, 0), Vector3(0.05, 0.18, w + 0.05), lm)
+			_bar(Vector3(0, y, sgn * w / 2.0), Vector3(w + 0.05, 0.18, 0.05), lm)
 	for i in 64:
 		_add_tile(i)
 
