@@ -25,11 +25,46 @@ func _ready() -> void:
 	var body := UI.vbox(40)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.add_child(body)
+	if PlayGames.available:
+		body.add_child(_play_games_card())
 	body.add_child(_rank_card())
 	body.add_child(_streak_section())
 	body.add_child(_medals_section())
 	body.add_child(_unlocks_section())
 	v.add_child(UI.nav_dock("Rewards"))
+	PlayGames.status_changed.connect(_on_play_games_status)   # bound method: auto-disconnects when this screen is freed
+
+## Google Play Games: sign-in state, plus Achievements / Leaderboards when signed in.
+func _play_games_card() -> Control:
+	var p: Dictionary = ThemeManager.palette
+	var card := UI.card(36)
+	var v := UI.vbox(24)
+	card.add_child(v)
+	var head := UI.hbox(28)
+	var ic: Control = Glyph.make("trophy", 56, p["accent"])
+	ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(ic)
+	var col := UI.vbox(4)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(UI.title_label("Google Play Games", 42))
+	col.add_child(UI.mono("Signed in · progress backed up" if PlayGames.signed_in else "Not signed in", 23,
+		p["accent"] if PlayGames.signed_in else Color(0, 0, 0, 0)))
+	head.add_child(col)
+	v.add_child(head)
+	var row := UI.hbox(22)
+	if PlayGames.signed_in:
+		var a := UI.button("Achievements", PlayGames.show_achievements, 121)
+		var l := UI.button("Leaderboards", PlayGames.show_leaderboards, 121)
+		for b in [a, l]:
+			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			b.add_theme_font_size_override("font_size", 36)
+			row.add_child(b)
+	else:
+		var s := UI.primary("Sign in", PlayGames.sign_in, 121)
+		s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(s)
+	v.add_child(row)
+	return card
 
 func _section_title(text: String, right: String = "", right_col: Color = Color(0, 0, 0, 0)) -> Control:
 	var h := UI.hbox(10)
@@ -165,6 +200,10 @@ func _unlocks_section() -> Control:
 		cell.add_child(UI.mono("In use" if cur else ("Open" if open else "Rank %d" % RewardsData.theme_rank(key)), 22, Color(0, 0, 0, 0), HORIZONTAL_ALIGNMENT_CENTER))
 		row.add_child(cell)
 	return v
+
+func _on_play_games_status() -> void:
+	if is_inside_tree():
+		Nav.go("res://scenes/rewards.tscn")
 
 func on_back() -> void:
 	Nav.go("res://scenes/main_menu.tscn")

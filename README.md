@@ -74,8 +74,19 @@ Futuristic restyle of every screen, following the "Sudoku 3D Neon UI" design can
 - 3D board: emissive selected tile and player digits, glowing box dividers and rim, bloom when High quality is on.
 - Screenshot flags for the game scene: `--demo` plus `--pause`, `--lose`, `--win` or `--cube`.
 
+## Google Play Games (v1.3.0)
+Optional online layer; the game stays fully playable offline and on desktop every call is a no-op.
+- Plugin: `addons/GodotPlayGameServices` (godot-sdk-integrations v3.4.0, MIT), enabled in `project.godot`.
+- `autoload/play_games.gd` (`PlayGames`): sign-in, unlocks an achievement per earned medal tier, submits best
+  times (ms) and total XP to leaderboards, and backs up stats + rewards to Saved Games after every finished game.
+- `scripts/game/cloud_save.gd` (tests in `tests/test_cloud_save.gd`): payload + merge that keeps the better value of
+  every field, so restoring on another phone never loses progress.
+- IDs from Play Console go in `scripts/game/play_games_ids.gd`; empty IDs are skipped. Setup steps, achievement and
+  leaderboard lists: `store/PLAY_GAMES_SETUP.md`. The Rewards screen shows a Play Games card on Android.
+- Adds the INTERNET permission (used only by Play Games); the privacy policy covers it.
+
 ## Android build and release (M6)
-Package `com.aitechplay.sudoku3d`, min SDK 24, target SDK 36, portrait, no INTERNET permission, arm64 + armv7 (debug also x86_64).
+Package `com.aitechplay.sudoku3d`, min SDK 24, target SDK 36, portrait, INTERNET (Play Games only) + VIBRATE, arm64 + armv7 (debug also x86_64).
 Presets are in `export_presets.cfg`: **Android Debug APK** and **Android Release AAB** (Gradle build).
 
 1. **Toolchain (once):** `scripts_tools/setup_android.sh` installs/checks, asking before each large download:

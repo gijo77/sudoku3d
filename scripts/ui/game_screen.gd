@@ -388,6 +388,7 @@ func _finish(won: bool) -> void:
 	var reward: Dictionary = Rewards.data.apply_result(model.difficulty, won, model.mistakes, model.elapsed,
 		mode == "cube", first_daily, Stats.data.daily_streak(UI.today_key()))
 	Rewards.save()
+	PlayGames.sync()   # achievements, leaderboards, cloud save (no-op when not signed in)
 	if won:
 		_build_win(reward, new_best, first_daily)
 	else:
