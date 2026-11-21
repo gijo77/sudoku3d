@@ -8,7 +8,10 @@ The app now declares the INTERNET permission (used only by Play Games).
 ## 1. Properties
 Play Console › Play Games services › Configuration › **Edit properties** › turn **Saved games ON**.
 
-## 2. Achievements (18) — Play Games services › Achievements › Create
+## 2. Achievements (18) — Play Games services › Achievements › Import achievements
+Fastest: upload `store/play_games_achievements.zip` (all 18 with medal icons, built by
+`godot --path . --script res://scripts_tools/achievements/render_icons.gd -- <dir>` then zipped flat).
+Or create them one by one:
 All standard (not incremental), initial state **Revealed**. Points: Bronze 10, Silver 25, Gold 50 (total 510 of 1000).
 Copy each achievement ID into `ACHIEVEMENTS` in `scripts/game/play_games_ids.gd` (Bronze, Silver, Gold order).
 
