@@ -15,7 +15,7 @@ const ACHIEVEMENTS := {
 }
 
 ## Best time per classic difficulty (0 = Easy .. 3 = Expert), submitted in milliseconds.
-const BEST_TIME := ["", "", "", ""]
+const BEST_TIME := ["", "", "", "CgkI5se81I0GEAIQAg"]
 
 ## Total XP (higher is better).
-const TOTAL_XP := ""
+const TOTAL_XP := "CgkI5se81I0GEAIQAQ"
