@@ -68,16 +68,17 @@ func is_light() -> bool:
 	return palette["bg"].get_luminance() > 0.5
 
 func _load_fonts() -> void:
-	font_head = _variant("head", 600, 0.55, 0)
+	font_head = _variant("head", 650, 0.55, 0)
 	font_body = _variant("body", 400, 0.0, 0)
-	font_mono = _variant("mono", 600, 0.35, 3)
+	font_mono = _variant("mono", 600, 0.35, 2)
 
 func _variant(kind: String, weight: int, fallback_bold: float, spacing: int) -> FontVariation:
 	var v := FontVariation.new()
 	var path: String = FONT_FILES[kind]
 	if ResourceLoader.exists(path):
 		v.base_font = load(path)
-		v.variation_opentype = {"wght": weight}
+		var ts := TextServerManager.get_primary_interface()
+		v.variation_opentype = {ts.name_to_tag("wght"): weight}
 	else:
 		v.base_font = ThemeDB.fallback_font
 		v.variation_embolden = fallback_bold

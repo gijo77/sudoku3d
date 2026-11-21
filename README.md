@@ -67,6 +67,8 @@ Futuristic restyle of every screen, following the "Sudoku 3D Neon UI" design can
 - `autoload/theme_manager.gd`: neon palettes (Dark is the default; Light, Ocean, Forest, Sunset keep their rank gates),
   glass panels (`glass()`), glowing fills (`fill()`, `style_primary()`), and fonts. Fonts load from
   `assets/fonts/SpaceGrotesk.ttf`, `Inter.ttf`, `JetBrainsMono.ttf` when present, otherwise the engine font is used.
+  The three fonts are bundled (variable TTFs from Google Fonts, SIL Open Font License 1.1; licence texts in
+  `assets/fonts/OFL-*.txt`, also packed into the app). Space Grotesk also draws the 3D tile digits.
 - `scripts/ui/ui_kit.gd`: headers, cards, chips, switches, segmented controls, stat tiles and the bottom nav dock.
   `lattice.gd` (grid background + glows), `ring.gd`, `bar.gd`, `iso_art.gd` (menu logo, splash cube) draw in code.
 - 3D board: emissive selected tile and player digits, glowing box dividers and rim, bloom when High quality is on.

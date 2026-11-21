@@ -45,7 +45,7 @@ func _init() -> void:
 func _text_mesh(text: String, font_size: int, pixel_size: float, depth: float) -> TextMesh:
 	var t := TextMesh.new()
 	t.text = text
-	t.font = ThemeDB.fallback_font
+	t.font = ThemeManager.font_head   # Space Grotesk digits on the tiles
 	t.font_size = font_size
 	t.pixel_size = pixel_size
 	t.depth = depth
